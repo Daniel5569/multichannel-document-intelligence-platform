@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DocumentIngestionRequest",
+  "type": "object",
+  "required": ["channel", "externalRef", "filename", "mimeType", "contentText", "extractionProfile"],
+  "properties": {
+    "channel": { "type": "string", "enum": ["email", "portal", "api", "sftp"] },
+    "externalRef": { "type": "string", "minLength": 1 },
+    "filename": { "type": "string", "minLength": 1 },
+    "mimeType": { "type": "string", "minLength": 1 },
+    "contentText": { "type": "string", "minLength": 1 },
+    "extractionProfile": { "type": "string", "minLength": 1 }
+  },
+  "additionalProperties": false
+}
+

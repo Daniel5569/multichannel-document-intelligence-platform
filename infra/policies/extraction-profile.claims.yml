@@ -1,0 +1,11 @@
+profile_id: claims
+required_entities:
+  - claim_number
+  - policy_number
+  - claimant_name
+  - loss_date
+  - claim_amount
+quality_thresholds:
+  auto_complete_min_confidence: 0.85
+  needs_review_below_confidence: 0.70
+
