@@ -1,0 +1,33 @@
+[project]
+name = "document-intelligence-engine"
+version = "0.1.0"
+description = "Async extraction and normalization engine for document intelligence workflows."
+requires-python = ">=3.11"
+dependencies = [
+  "asyncpg>=0.31.0",
+  "fastapi>=0.136.3",
+  "pydantic>=2.12.5",
+  "pydantic-settings>=2.14.1",
+  "redis>=7.2.1",
+  "uvicorn[standard]>=0.38.0"
+]
+
+[project.optional-dependencies]
+dev = [
+  "black>=26.1.0",
+  "pytest>=9.0.3",
+  "pytest-asyncio>=1.4.0",
+  "ruff>=0.14.8"
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.black]
+line-length = 110
+target-version = ["py311"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py311"
