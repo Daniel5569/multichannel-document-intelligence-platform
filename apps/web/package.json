@@ -1,0 +1,35 @@
+{
+  "name": "@portfolio/document-intelligence-web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint . --max-warnings=0",
+    "format:check": "prettier --check .",
+    "audit": "npm audit --audit-level=moderate"
+  },
+  "dependencies": {
+    "next": "16.3.0-canary.43",
+    "pg": "^8.16.3",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "redis": "^5.10.0",
+    "zod": "^4.2.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "@types/pg": "^8.16.0",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "eslint": "^9.39.1",
+    "eslint-config-next": "16.3.0-canary.43",
+    "postcss": "^8.5.15",
+    "prettier": "^3.7.4",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.8"
+  }
+}
