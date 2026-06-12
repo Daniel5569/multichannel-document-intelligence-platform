@@ -31,6 +31,20 @@ function jsonRequest(payload: unknown) {
     headers: { "content-type": "application/json" },
     body: JSON.stringify(payload)
   });
+
+  it("returns 400 for unsupported mime types", async () => {
+    const response = await POST(jsonRequest({ ...body, mimeType: "application/x-msdownload" }));
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({ error: "invalid_document_request" });
+  });
+
+  it("returns 400 when supplied byte size does not match content", async () => {
+    const response = await POST(jsonRequest({ ...body, contentByteSize: 999 }));
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({ error: "invalid_document_request" });
+  });
 }
 
 describe("POST /api/documents", () => {
@@ -67,7 +81,12 @@ describe("POST /api/documents", () => {
       contentHash: "hash"
     });
 
-    const response = await POST(jsonRequest(body));
+    const response = await POST(
+      jsonRequest({
+        ...body,
+        contentByteSize: new TextEncoder().encode(body.contentText).length
+      })
+    );
 
     expect(response.status).toBe(202);
     expect(await response.json()).toMatchObject({ documentId: "doc-1", ingestionRunId: "run-1" });

@@ -51,10 +51,13 @@ async def process_job(payload: dict[str, str]) -> None:
     ingestion_run_id = payload["ingestionRunId"]
     document_id = payload["documentId"]
     version_id = payload["versionId"]
+    extraction_profile = payload["extractionProfile"]
 
     await database.set_run_status(ingestion_run_id, "running")
     await database.set_document_status(document_id, "processing")
     try:
+        if extraction_profile != "claims":
+            raise ValueError("unsupported_extraction_profile")
         text_body = await database.fetch_version_text(version_id)
         entities = extract_entities(text_body)
         claim = map_claim(entities)

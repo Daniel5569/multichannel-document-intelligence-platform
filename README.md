@@ -120,7 +120,7 @@ These are local reference characteristics and test guardrails, not hosted produc
 - Docker Compose v2
 - GitHub CLI `gh` for publication automation
 
-Dependency note: the lockfile pins the npm-published `next@16.3.0-canary.43` release because the audited stable dependency path still resolves a vulnerable nested PostCSS package under `npm audit`.
+Dependency note: the web app is temporarily pinned to `next@16.3.0-canary.43` / `eslint-config-next@16.3.0-canary.43`. On 2026-06-12, the latest stable `16.2.9` still triggers the nested PostCSS audit advisory, while this canary keeps `npm audit --audit-level=moderate` clean. Move back to stable as soon as the patched stable dependency path ships.
 
 ## Quick Start
 
@@ -147,12 +147,19 @@ curl -X POST http://localhost:3000/api/documents \
     "externalRef": "claim-email-1042",
     "filename": "claim-packet.txt",
     "mimeType": "text/plain",
+    "contentByteSize": 117,
     "contentText": "Claim Number: CLM-2026-1042\nPolicy Number: POL-88A\nClaimant: Ada Morgan\nLoss Date: 2026-05-17\nClaim Amount: $12840.50",
     "extractionProfile": "claims"
   }'
 ```
 
 ## Testing
+
+Whole-repo check:
+
+```bash
+npm run check
+```
 
 Node gateway:
 
@@ -175,6 +182,17 @@ python -m black --check .
 ```
 
 GitHub Actions runs unit tests, a Postgres/Redis integration test, audit, and the Next.js production build.
+
+## Production Safety
+
+Local `.env` files are ignored; commit only `.env.example`. The gateway and engine allow `change-me-in-production` defaults only when `APP_ENV=development` or `ALLOW_INSECURE_DEV_DEFAULTS=1` is set. In production runtime, missing Redis configuration or default database credentials fail closed.
+
+The public ingestion boundary validates allowed mime types, optional byte size, and optional SHA-256 checksum before enqueueing. Unsupported extraction profiles fail closed in the worker.
+
+## What Is Real Vs Demo
+
+- Real: async admission API, normalized PostgreSQL records, Redis Streams with dead-letter/XCLAIM recovery, deterministic extraction fixtures, and human-review status modeling.
+- Demo-shaped: OCR and file storage are dependency-light public mocks. Production should add object storage uploads, OCR provider adapters, reviewer APIs, and lag/error dashboards.
 
 ## Known Limitations / Roadmap
 

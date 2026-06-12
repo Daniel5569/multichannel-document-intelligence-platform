@@ -1,7 +1,18 @@
+import os
 from urllib.parse import quote
 
-from pydantic import Field, SecretStr
+from pydantic import Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+INSECURE_DEFAULT_MARKER = "change-me-in-production"
+
+
+def _is_production_runtime() -> bool:
+    return os.getenv("NODE_ENV") == "production" or os.getenv("APP_ENV") == "production"
+
+
+def _allows_development_defaults() -> bool:
+    return os.getenv("APP_ENV") == "development" or os.getenv("ALLOW_INSECURE_DEV_DEFAULTS") == "1"
 
 
 class Settings(BaseSettings):
@@ -28,6 +39,20 @@ class Settings(BaseSettings):
         password = quote(self.postgres_password.get_secret_value(), safe="")
         database = quote(self.postgres_db, safe="")
         return f"postgresql://{user}:{password}@{self.postgres_host}:{self.postgres_port}/{database}"
+
+    @model_validator(mode="after")
+    def validate_production_config(self) -> "Settings":
+        if not _is_production_runtime() or _allows_development_defaults():
+            return self
+        if self.database_url_override and INSECURE_DEFAULT_MARKER in self.database_url_override:
+            raise ValueError("DATABASE_URL_uses_insecure_default")
+        if self.database_url_override is None and os.getenv("POSTGRES_PASSWORD") is None:
+            raise ValueError("POSTGRES_PASSWORD_required_in_production")
+        if INSECURE_DEFAULT_MARKER in self.postgres_password.get_secret_value():
+            raise ValueError("POSTGRES_PASSWORD_uses_insecure_default")
+        if os.getenv("REDIS_URL") is None:
+            raise ValueError("REDIS_URL_required_in_production")
+        return self
 
 
 settings = Settings()

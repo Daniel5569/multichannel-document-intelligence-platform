@@ -108,6 +108,25 @@ async def test_process_job_marks_failed_on_extraction_error(monkeypatch: pytest.
     assert fake_db.document_statuses[-1] == ("doc-1", "failed")
 
 
+@pytest.mark.asyncio
+async def test_process_job_fails_closed_for_unsupported_profile(monkeypatch: pytest.MonkeyPatch) -> None:
+    fake_db = FakeDatabase("Claim Number: CLM-1")
+    monkeypatch.setattr(worker, "database", fake_db)
+
+    await worker.process_job(
+        {
+            "ingestionRunId": "run-1",
+            "documentId": "doc-1",
+            "versionId": "version-1",
+            "extractionProfile": "unsupported",
+        }
+    )
+
+    assert fake_db.run_statuses[-1][1] == "failed"
+    assert fake_db.run_statuses[-1][2]["message"] == "unsupported_extraction_profile"
+    assert fake_db.document_statuses[-1] == ("doc-1", "failed")
+
+
 class FakeRedisForReclaim:
     def __init__(self) -> None:
         self.acked: list[str] = []

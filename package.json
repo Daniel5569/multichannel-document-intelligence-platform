@@ -7,9 +7,18 @@
   ],
   "scripts": {
     "test": "npm --workspace apps/web test",
+    "test:integration": "node scripts/run-web-integration.mjs src/app/api/documents/route.integration.test.ts",
     "build": "npm --workspace apps/web run build",
     "lint": "npm --workspace apps/web run lint",
     "format:check": "npm --workspace apps/web run format:check",
-    "audit": "npm --workspace apps/web run audit"
+    "audit": "npm --workspace apps/web run audit",
+    "test:python": "cd services/engine && python -m pytest",
+    "lint:python": "cd services/engine && python -m ruff check .",
+    "format:python": "cd services/engine && python -m black --check .",
+    "check:artifacts": "python scripts/check_generated_artifacts.py",
+    "check": "npm run check:artifacts && npm run audit && npm run lint && npm run format:check && npm run test && npm run build && npm run test:python && npm run lint:python && npm run format:python"
+  },
+  "overrides": {
+    "postcss": "^8.5.15"
   }
 }

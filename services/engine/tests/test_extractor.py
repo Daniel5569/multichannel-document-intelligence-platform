@@ -30,6 +30,25 @@ def test_extract_entities_returns_partial_evidence_when_fields_are_missing() -> 
     assert [entity.entity_type for entity in entities] == ["claim_number"]
 
 
+def test_extract_entities_handles_ocr_spacing_noise() -> None:
+    entities = extract_entities(
+        "\n".join(
+            [
+                "Claim   No.: CLM-77",
+                "Policy Number: POL-77",
+                "Claimant: Jo Rivera",
+                "Loss Date: 2026-02-03",
+                "Claim Amount: $1,200.00",
+            ]
+        )
+    )
+
+    by_type = {entity.entity_type: entity for entity in entities}
+
+    assert by_type["claim_number"].normalized_value == "CLM-77"
+    assert by_type["claim_amount"].normalized_value == "120000"
+
+
 def test_normalize_amount_rejects_invalid_money() -> None:
     with pytest.raises(ValueError, match="invalid_claim_amount"):
         normalize_amount("not-money")
