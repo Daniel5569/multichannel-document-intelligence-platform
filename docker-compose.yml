@@ -44,6 +44,7 @@ services:
       - internal
 
   engine:
+    restart: unless-stopped
     build:
       context: .
       dockerfile: services/engine/Dockerfile

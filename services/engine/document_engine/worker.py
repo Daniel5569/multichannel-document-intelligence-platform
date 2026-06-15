@@ -1,4 +1,6 @@
+import asyncio
 import json
+import logging
 from typing import Any
 
 from redis.asyncio import Redis
@@ -8,6 +10,8 @@ from .config import settings
 from .db import database
 from .extractor import extract_entities
 from .mapper import map_claim
+
+logger = logging.getLogger(__name__)
 
 STREAM_KEY = "document-ingestion"
 DEAD_LETTER_STREAM = "document-ingestion-dead-letter"
@@ -154,12 +158,21 @@ async def consume_once(redis: Redis) -> bool:
 
 
 async def worker_loop() -> None:
-    redis = Redis.from_url(settings.redis_url, decode_responses=True)
+    redis = Redis.from_url(
+        settings.redis_url,
+        decode_responses=True,
+        socket_timeout=10,
+        socket_connect_timeout=5,
+    )
     try:
         await ensure_consumer_group(redis)
         while True:
-            consumed = await consume_once(redis)
-            if not consumed:
-                await reclaim_stale_pending(redis)
+            try:
+                consumed = await consume_once(redis)
+                if not consumed:
+                    await reclaim_stale_pending(redis)
+            except Exception as exc:
+                logger.exception("worker_loop error: %s", exc)
+                await asyncio.sleep(1)
     finally:
         await redis.aclose()
