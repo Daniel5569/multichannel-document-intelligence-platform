@@ -5,6 +5,8 @@
 ![Node](https://img.shields.io/badge/node-%E2%89%A520-blue.svg)
 ![Python](https://img.shields.io/badge/python-%E2%89%A53.11-blue.svg)
 
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/Daniel5569/multichannel-document-intelligence-platform&root-directory=apps/web)
+
 Production-shaped portfolio case study for AI-native companies that ingest contracts, claims, invoices, and dense PDF packets across email, portals, APIs, and back-office queues.
 
 The system uses a bicephalous architecture:
