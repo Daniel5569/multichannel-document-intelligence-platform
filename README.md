@@ -40,7 +40,6 @@ This case study solves that problem by splitting ingestion, extraction, normaliz
 
 ## Demo
 
-![Document ingestion lifecycle demo](docs/demo.gif)
 
 The demo shows the intended operator flow: submit a document packet, receive `202 Accepted`, enqueue extraction through Redis Streams, then persist normalized claim data and validation-ready evidence.
 
