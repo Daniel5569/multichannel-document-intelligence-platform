@@ -221,3 +221,28 @@ The public ingestion boundary validates allowed mime types, optional byte size, 
 ## Context
 
 Document AI is an infrastructure problem, not a prompt demo. This system shows asynchronous queueing, typed extraction evidence, normalized relational modeling, worker failure handling, and CI-backed reproducibility in one inspectable monorepo.
+## Architecture Decisions FAQ
+
+**Q: Why async extraction via Redis Streams instead of a synchronous LLM call per request?**
+
+Document extraction can take 5–30 seconds depending on document length and provider latency. A synchronous handler would hold the HTTP connection open, block the Next.js serverless slot, and produce timeout errors for any document over a few pages. Redis Streams decouple intake from processing: the gateway returns a job ID immediately, the Python worker processes at its own pace, and the frontend polls for completion. This also makes retry and dead-letter handling explicit rather than hidden inside a try/catch.
+
+**Q: Why PostgreSQL with normalized 3NF tables instead of a document store like MongoDB?**
+
+Extracted fields are typed and relational — a document has one vendor, one date, multiple line items, each line item belongs to one document. Storing that as JSONB blobs makes aggregation queries (total spend by vendor this month, documents with missing amounts) expensive and fragile. Normalized tables make those queries trivial SQL and let the schema enforce that a line item cannot exist without a parent document. MongoDB would simplify the write path at the cost of every read that crosses entity boundaries.
+
+**Q: What happens to a document if the extraction worker crashes mid-process?**
+
+The Redis Streams consumer group keeps the message in a pending-entries list (PEL) until it is explicitly acknowledged. A crashed worker never sends the ACK, so the message reappears after the visibility timeout and is picked up by the next available worker instance. The document row in PostgreSQL remains in `extracting` status — the new worker overwrites the fields rather than creating a duplicate. This is why idempotent writes matter: the same extraction result applied twice produces the same row state.
+
+**Q: Why split Python for extraction and Node.js for the gateway?**
+
+Next.js API routes handle HTTP, validation, and the React frontend in one deployment unit — that is what they are optimized for. Python has the mature LLM client libraries (LangChain, instructor, tiktoken) and the data-science ecosystem for post-extraction normalization. Forcing LLM calls into a Node.js worker is possible but fights the ecosystem; forcing a Python service to also serve SSR React is not. The split adds one network hop but keeps each process doing what its runtime is best at.
+
+**Q: What channels does multichannel cover in practice?**
+
+The current implementation handles PDFs and structured text uploads. The architecture is designed so that adding an email ingestor (IMAP + attachment stripping), a Slack webhook receiver, or an S3 event trigger requires only a new intake route that publishes to the same Redis Stream — the extraction worker does not change. The word multichannel describes this extension point, not a claim that all channels are already implemented.
+
+**Q: Why CI-test extraction outputs instead of only testing the API surface?**
+
+An API test that checks HTTP 200 and a job ID proves routing works, not that the extraction logic is correct. The integration tests in this repo run the full extraction pipeline against fixture documents and assert that specific fields are populated with the expected values. This catches prompt regressions, schema drift, and Python dependency updates that silently change extraction behavior — the class of bugs that only appear in production when a customer notices a wrong total on an invoice.
