@@ -9,6 +9,21 @@
 
 Production-shaped portfolio case study for AI-native companies that ingest contracts, claims, invoices, and dense PDF packets across email, portals, APIs, and back-office queues.
 
+## Who this is built for
+
+| Vertical | Document types | Why this matters |
+|----------|---------------|-----------------|
+| **InsurTech** | Claims packets, loss notices, policy PDFs | Multi-channel ingestion, human validation loop before payout decisions |
+| **LegalTech** | Contracts, NDAs, agreements from email and portals | Typed extraction evidence, immutable review events, 3NF relational model |
+| **FinTech / Lending** | Invoices, bank statements, KYC documents | Bursty async ingestion, schema drift handling, audit trail for compliance |
+| **Enterprise back-office** | Mixed document queues from email, APIs, and portals | Dead-letter recovery, XCLAIM, multi-channel normalisation into one schema |
+
+## Business Problem
+
+Document AI fails in production when extraction is treated as a single synchronous API endpoint. The real pipeline is messier: documents arrive in bursts over email and portals, field names drift across vendors, extraction fails intermittently, and a human needs to validate before the data is trusted downstream.
+
+This system models the full pipeline: async ingestion → Redis Stream dispatch → typed extraction evidence → 3NF relational normalization → human validation events. Nothing is silently dropped: failed extractions are dead-lettered, stale messages are XCLAIM-recovered, and every reviewer decision is an immutable event.
+
 The system uses a bicephalous architecture:
 
 - **Next.js / TypeScript** owns ingestion admission, API validation, relational metadata, and Redis Stream dispatch.
